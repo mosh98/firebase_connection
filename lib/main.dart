@@ -64,8 +64,7 @@ class _MyHomePageState extends State<MyHomePage> {
     var docref = Firestore.instance
         .collection('messg')
         .document('Message');
-       // .collection(uid)
-        //.document(DateTime.now().millisecondsSinceEpoch.toString());
+
 
     //Map<String,dynamic> mapz = new Map();
     Map <String, dynamic > mapz =  {
@@ -75,16 +74,14 @@ class _MyHomePageState extends State<MyHomePage> {
     };
 
 
-    docref.updateData(mapz);
+    Firestore.instance.runTransaction((transaction) async{
+      await transaction.update(
+          docref, mapz);
+    }
 
-    //Firestore.instance.collection('Users').document('$uid').collection(uid);
+    );
 
-//    databaseReference.runTransaction((transaction) async {
-//      await transaction.set(
-//        docref,
-//        {"Message": msg.message.toString()},
-//      );
-//    });
+
   }
 
   //final myController = TextEditingController();
