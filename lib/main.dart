@@ -51,7 +51,7 @@ class _MyHomePageState extends State<MyHomePage> {
         .updateData({'chattingWith': uid});
   }
 
-  void onSendMessage(String content, String uid) {
+  void _onSendMessage(String content, String uid) {
     DateTime now = DateTime.now();
     String formattedDate = DateFormat('kk:mm:ss \n EEE d MMM').format(now);
 
@@ -59,19 +59,19 @@ class _MyHomePageState extends State<MyHomePage> {
     Message msg = new Message(content, formattedDate, uid);
 
     var docref = Firestore.instance
-        .collection('Users')
-        .document(uid)
-        .collection(uid)
-        .document(DateTime.now().millisecondsSinceEpoch.toString());
+        .collection('messg')
+        .document(uid);
+       // .collection(uid)
+        //.document(DateTime.now().millisecondsSinceEpoch.toString());
 
     //Firestore.instance.collection('Users').document('$uid').collection(uid);
 
-    databaseReference.runTransaction((transaction) async {
-      await transaction.set(
-        docref,
-        {"Message": msg},
-      );
-    });
+//    databaseReference.runTransaction((transaction) async {
+//      await transaction.set(
+//        docref,
+//        {"Message": msg.message.toString()},
+//      );
+//    });
   }
 
   //final myController = TextEditingController();
@@ -91,29 +91,21 @@ class _MyHomePageState extends State<MyHomePage> {
             Expanded(
               flex: 10,
               child: StreamBuilder(
-                //stream: Firestore.instance.collection('Users').snapshots(),
+                stream: Firestore.instance.collection('messg').snapshots(),
                 builder: (context, snapshot) {
-                  //if (!snapshot.hasData) return Text('Data is coming');
+                  if (!snapshot.hasData) return Text('Data is coming');
 
                   return ListView.builder(
                       scrollDirection: Axis.vertical,
                       shrinkWrap: true,
-                      //itemCount: snapshot.data.documents.length,
+                      itemCount: snapshot.data.documents.length,
                       itemBuilder: (_, int index) {
-                        return ListTile(
-                          title: Text("This is a message"),
-                          subtitle: Text("Some day some time"),
-                        );
-                        /*final DocumentSnapshot docs =
+                        final DocumentSnapshot docs =
                         snapshot.data.documents[index];
-                        Message msgz = new Message(
-                            docs['Message'], docs['TimeStamp'],
-                            docs['NameUser']);
-
                         return ListTile(
-                          title: Text(msgz.toString()),
-                          //subtitle: Text( "\n "+username.toString() +"  "+ timeStamp.toString( ) ),
-                        );*/
+                          title: Text(docs['Message']),
+                          subtitle: Text(docs['NameUser']),
+                        );
                       });
                 },
               ),
@@ -125,7 +117,9 @@ class _MyHomePageState extends State<MyHomePage> {
                 decoration: InputDecoration(
                     hintText: "Skicka ett meddelande",
                     suffixIcon: IconButton(
-                      onPressed: () => textController.clear(),
+                      onPressed: () {
+                        onSendMessage(textController.toString(), "Qk€dnjDS");
+                      },
                       icon:Icon(Icons.send, color: Colors.blue,),
 
                       //color: Colors.blue,
