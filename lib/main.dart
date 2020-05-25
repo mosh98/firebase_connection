@@ -124,9 +124,10 @@ class _MyHomePageState extends State<MyHomePage> {
                 controller: textController,
                 decoration: InputDecoration(
                     hintText: "Skicka ett meddelande",
-                    suffixIcon: Icon(
-                      Icons.send,
-                      color: Colors.blue,
+                    suffixIcon: IconButton(
+                      onPressed: () => textController.clear(),
+                      icon:Icon(Icons.send, color: Colors.blue,),
+
                       //color: Colors.blue,
                     )),
               ),
