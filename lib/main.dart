@@ -89,6 +89,7 @@ void onSendMessage(String content, String uid ){
   });
 
 }
+  final myController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -98,38 +99,42 @@ void onSendMessage(String content, String uid ){
         title: Text(widget.title),
       ),
 
-      body: Container(
-       child:
-         StreamBuilder(
+      body: Row(
+        children: [
 
-           stream: Firestore.instance.collection('messg').snapshots(),
-           builder: (context,snapshot){
+          StreamBuilder(
 
-             if(! snapshot.hasData ) return Text('Data is coming');
+            stream: Firestore.instance.collection('messg').snapshots(),
+            builder: (context,snapshot){
 
-             return ListView.builder(
+              if(! snapshot.hasData ) return Text('Data is coming');
 
-                 itemCount: snapshot.data.documents.length,
+              return ListView.builder(
 
-                 itemBuilder: (_, int index){
-                   final DocumentSnapshot docs = snapshot.data.documents[index];
-                   Message msgz = new Message(docs['Message'], docs['TimeStamp'], docs['NameUser']);
+                  itemCount: snapshot.data.documents.length,
 
-                   return ListTile(
-                     title: Text(msgz.toString()),
-                     //subtitle: Text( "\n "+username.toString() +"  "+ timeStamp.toString( ) ),
-                   );
-                 }) ;
-           },
-         ),
-        Row:
-        new TextField(
+                  itemBuilder: (_, int index){
+                    final DocumentSnapshot docs = snapshot.data.documents[index];
+                    Message msgz = new Message(docs['Message'], docs['TimeStamp'], docs['NameUser']);
+
+                    return ListTile(
+                      title: Text(msgz.toString()),
+                      //subtitle: Text( "\n "+username.toString() +"  "+ timeStamp.toString( ) ),
+                    );
+                  }) ;
+            },
+          ),
+
+          new TextField(
+            controller: myController,
             decoration: InputDecoration(
-              border: OutlineInputBorder(),
-              labelText: 'say something',
+                border: InputBorder.none,
+                hintText: 'Enter a search term'
             ),
           )
-      )
+        ],
+      ),
+
 
     );
   }
