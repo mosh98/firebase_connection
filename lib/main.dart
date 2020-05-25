@@ -5,6 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 
+//TODO: Be able to send things
+
+
 void main() {
   runApp(MyApp());
 }
@@ -60,9 +63,19 @@ class _MyHomePageState extends State<MyHomePage> {
 
     var docref = Firestore.instance
         .collection('messg')
-        .document(uid);
+        .document('Message');
        // .collection(uid)
         //.document(DateTime.now().millisecondsSinceEpoch.toString());
+
+    //Map<String,dynamic> mapz = new Map();
+    Map <String, dynamic > mapz =  {
+      'Message': msg.message,
+      'NameUser': msg.NameUser,
+      'TimeStamp': msg.TimeStamp,
+    };
+
+
+    docref.updateData(mapz);
 
     //Firestore.instance.collection('Users').document('$uid').collection(uid);
 
@@ -102,9 +115,13 @@ class _MyHomePageState extends State<MyHomePage> {
                       itemBuilder: (_, int index) {
                         final DocumentSnapshot docs =
                         snapshot.data.documents[index];
+                        String tim =  docs['TimeStamp'];
+                        String User = docs['NameUser'];
+                        String anotherOne = User+" Sent: " +tim;
                         return ListTile(
                           title: Text(docs['Message']),
-                          subtitle: Text(docs['NameUser']),
+
+                          subtitle: Text(anotherOne),
                         );
                       });
                 },
@@ -118,7 +135,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     hintText: "Skicka ett meddelande",
                     suffixIcon: IconButton(
                       onPressed: () {
-                        onSendMessage(textController.toString(), "Qk€dnjDS");
+                        _onSendMessage(textController.text, "MOSH");
                       },
                       icon:Icon(Icons.send, color: Colors.blue,),
 
