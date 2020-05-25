@@ -66,8 +66,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
     //Firestore.instance.collection('Users').document('$uid').collection(uid);
 
-
-
     databaseReference.runTransaction((transaction) async {
       await transaction.set(
         docref,
@@ -76,67 +74,67 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  final myController = TextEditingController();
+  //final myController = TextEditingController();
+
+  final textController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: Text(widget.title),
-        ),
-        body: Row(
-          children: [
-            StreamBuilder(
-              stream: Firestore.instance.collection('Users').snapshots(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) return Text('Data is coming');
-
-                return ListView.builder(
-                    scrollDirection: Axis.vertical,
-                    shrinkWrap: true,
-                    itemCount: snapshot.data.documents.length,
-                    itemBuilder: (_, int index) {
-                      final DocumentSnapshot docs =
-                          snapshot.data.documents[index];
-                      Message msgz = new Message(
-                          docs['Message'], docs['TimeStamp'], docs['NameUser']);
-
-                      return ListTile(
-                        title: Text(msgz.toString()),
-                        //subtitle: Text( "\n "+username.toString() +"  "+ timeStamp.toString( ) ),
-                      );
-                    });
-              },
-            ),
-          ],
-        ),
-        bottomNavigationBar: Container(
-          margin: EdgeInsets.all(12),
-          padding: EdgeInsets.symmetric(vertical: 6, horizontal: 12),
-          decoration: BoxDecoration(
-            color: Colors.blue[400],
-            borderRadius: BorderRadius.all(Radius.circular(10)),
-          ),
-          child: Row(children: <Widget>[
+      appBar: AppBar(
+        title: Text('Chat window'),
+      ),
+      body: SafeArea(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: <Widget>[
             Expanded(
-              child: TextField(
-                controller: myController,
-                style: TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  border: InputBorder.none,
-                  hintText: "Type Something...",
-                  hintStyle: TextStyle(color: Colors.white30),
-                ),
+              flex: 10,
+              child: StreamBuilder(
+                //stream: Firestore.instance.collection('Users').snapshots(),
+                builder: (context, snapshot) {
+                  //if (!snapshot.hasData) return Text('Data is coming');
+
+                  return ListView.builder(
+                      scrollDirection: Axis.vertical,
+                      shrinkWrap: true,
+                      //itemCount: snapshot.data.documents.length,
+                      itemBuilder: (_, int index) {
+                        return ListTile(
+                          title: Text("This is a message"),
+                          subtitle: Text("Some day some time"),
+                        );
+                        /*final DocumentSnapshot docs =
+                        snapshot.data.documents[index];
+                        Message msgz = new Message(
+                            docs['Message'], docs['TimeStamp'],
+                            docs['NameUser']);
+
+                        return ListTile(
+                          title: Text(msgz.toString()),
+                          //subtitle: Text( "\n "+username.toString() +"  "+ timeStamp.toString( ) ),
+                        );*/
+                      });
+                },
               ),
             ),
-            IconButton(
-              icon: Icon(Icons.send, color: Colors.blue),
-              onPressed: (){
-                onSendMessage(myController.toString(), "QuIk€L9");
-              },
-            ),
-          ]),
-        ));
+            Expanded(
+              flex: 2,
+              child: TextField(
+                controller: textController,
+                decoration: InputDecoration(
+                    hintText: "Skicka ett meddelande",
+                    suffixIcon: Icon(
+                      Icons.send,
+                      color: Colors.blue,
+                      //color: Colors.blue,
+                    )),
+              ),
+            )
+          ],
+        ),
+      ),
+    );
   }
 }
 
