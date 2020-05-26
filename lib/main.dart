@@ -81,30 +81,32 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: Text('Chat window'),
       ),
       body: SafeArea(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: <Widget>[
-            Expanded(
-              flex: 10,
-              child: StreamBuilder(
-                //stream: Firestore.instance.collection('Users').snapshots(),
-                builder: (context, snapshot) {
-                  //if (!snapshot.hasData) return Text('Data is coming');
+          child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          Expanded(
+            flex: 10,
+            child: StreamBuilder(
+              //stream: Firestore.instance.collection('Users').snapshots(),
+              builder: (context, snapshot) {
+                //if (!snapshot.hasData) return Text('Data is coming');
 
-                  return ListView.builder(
-                      scrollDirection: Axis.vertical,
-                      shrinkWrap: true,
-                      //itemCount: snapshot.data.documents.length,
-                      itemBuilder: (_, int index) {
-                        return ListTile(
-                          title: Text("This is a message"),
-                          subtitle: Text("Some day some time"),
-                        );
-                        /*final DocumentSnapshot docs =
+                return ListView.builder(
+                    scrollDirection: Axis.vertical,
+                    shrinkWrap: true,
+                    itemCount: 10,
+                    //itemCount: snapshot.data.documents.length,
+                    itemBuilder: (_, int index) {
+                      return ListTile(
+                        title: Text("This is a message"),
+                        subtitle: Text("Some day some time"),
+                      );
+                      /*final DocumentSnapshot docs =
                         snapshot.data.documents[index];
                         Message msgz = new Message(
                             docs['Message'], docs['TimeStamp'],
@@ -114,26 +116,53 @@ class _MyHomePageState extends State<MyHomePage> {
                           title: Text(msgz.toString()),
                           //subtitle: Text( "\n "+username.toString() +"  "+ timeStamp.toString( ) ),
                         );*/
-                      });
-                },
-              ),
+                    });
+              },
             ),
-            Expanded(
-              flex: 2,
-              child: TextField(
-                controller: textController,
-                decoration: InputDecoration(
-                    hintText: "Skicka ett meddelande",
-                    suffixIcon: IconButton(
-                      onPressed: () => textController.clear(),
-                      icon:Icon(Icons.send, color: Colors.blue,),
+          ),
+          Expanded(
+            flex: 2,
+            child: TextField(
+              controller: textController,
+              decoration: InputDecoration(
+                  hintText: "Skicka ett meddelande",
+                  suffixIcon: IconButton(
+                    onPressed: () => textController.clear(),
+                    icon: Icon(
+                      Icons.send,
+                      color: Colors.blue,
+                    ),
 
-                      //color: Colors.blue,
-                    )),
+                    //color: Colors.blue,
+                  )),
+            ),
+          ),
+        ],
+      )),
+    );
+  }
+
+  ComposerField() {
+    return Container(
+      child: Row(
+        children: <Widget>[
+          IconButton(
+            icon: Icon(Icons.photo),
+          ),
+          Expanded(
+              child: TextField(
+            decoration: InputDecoration(
+                suffixIcon: IconButton(
+              onPressed: () => textController.clear(),
+              icon: Icon(
+                Icons.send,
+                color: Colors.blue,
               ),
-            )
-          ],
-        ),
+
+              //color: Colors.blue,
+            )),
+          )),
+        ],
       ),
     );
   }
