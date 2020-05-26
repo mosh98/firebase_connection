@@ -7,7 +7,6 @@ import 'package:intl/intl.dart';
 
 //TODO: Be able to send things
 
-
 void main() {
   runApp(MyApp());
 }
@@ -37,7 +36,6 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final databaseReference = Firestore.instance;
-  final textController = TextEditingController();
 
   List<Widget> makeListWidget(AsyncSnapshot snapshot) {
     return snapshot.data.documents.map<Widget>((document) {
@@ -56,41 +54,29 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _onSendMessage(String content, String uid) {
-    textController.clear();
     DateTime now = DateTime.now();
     String formattedDate = DateFormat('kk:mm:ss \n EEE d MMM').format(now);
 
     //payload
     Message msg = new Message(content, formattedDate, uid);
 
-    var docref = Firestore.instance
-        .collection('messg')
-        .document('Message');
-
+    var docref = Firestore.instance.collection('messg').document('Message');
 
     //Map<String,dynamic> mapz = new Map();
-    Map <String, dynamic > mapz =  {
+    Map<String, dynamic> mapz = {
       'Message': msg.message,
       'NameUser': msg.NameUser,
       'TimeStamp': msg.TimeStamp,
     };
 
-
-    Firestore.instance
-        .collection('messg')
-        .document('Message')
-        .updateData({'array':FieldValue.arrayUnion([mapz])});
-
-//
-//    Firestore.instance.runTransaction((transaction) async{
-//      await transaction.update(docref, mapz);});
-
-
+    Firestore.instance.runTransaction((transaction) async {
+      await transaction.update(docref, mapz);
+    });
   }
 
   //final myController = TextEditingController();
 
-
+  final textController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -105,28 +91,28 @@ class _MyHomePageState extends State<MyHomePage> {
             Expanded(
               flex: 10,
               child: StreamBuilder(
-                stream: Firestore.instance.collection('messg').snapshots(),
+                stream: Firestore.instance
+                    .collection('messg')
+                    .snapshots(),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) return Text('Data is coming');
 
                   return ListView.builder(
-                      scrollDirection: Axis.vertical,
-                      shrinkWrap: true,
-                      itemCount: snapshot.data.documents.length,
-                      itemBuilder: (_, int index) {
-                        final DocumentSnapshot docs =
-                        snapshot.data.documents[index];
+                    scrollDirection: Axis.vertical,
+                    shrinkWrap: true,
+                    itemCount: snapshot.data.documents.length,
+                    itemBuilder: (context, index) {
 
-                        String tim =  docs['TimeStamp'];
-                        String User = docs['NameUser'];
-                        String anotherOne = User+" Sent: " +tim;
-
-                        return ListTile(
-                          title: Text(docs['Message']),
-
-                          subtitle: Text(anotherOne),
-                        );
-                      });
+                      DocumentSnapshot msg = snapshot.data.documents[index];
+                      String s = msg.data['array'].toString();
+                     // print(msg.data.toString());
+                      return ListTile(
+                        // Access the fields as defined in FireStore
+                        title: Text(s),
+                       // subtitle: Text(msg.data['NameUser'].toString()),
+                      );
+                    },
+                  );
                 },
               ),
             ),
@@ -140,7 +126,10 @@ class _MyHomePageState extends State<MyHomePage> {
                       onPressed: () {
                         _onSendMessage(textController.text, "MOSH");
                       },
-                      icon:Icon(Icons.send, color: Colors.blue,),
+                      icon: Icon(
+                        Icons.send,
+                        color: Colors.blue,
+                      ),
 
                       //color: Colors.blue,
                     )),
