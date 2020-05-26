@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
@@ -6,8 +7,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 
 //TODO: Be able to send things
-
-
 void main() {
   runApp(MyApp());
 }
@@ -56,37 +55,38 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _onSendMessage(String content, String uid) {
     DateTime now = DateTime.now();
-    String formattedDate = DateFormat('kk:mm:ss \n EEE d MMM').format(now);
+    String formattedDate = DateFormat('kk:mm:ss').format(now);
 
     //payload
     Message msg = new Message(content, formattedDate, uid);
 
-    var docref = Firestore.instance
-        .collection('messg')
-        .document('Message');
+    var docref = Firestore.instance.collection('Users').document('UserMsg');
 
-
-    //Map<String,dynamic> mapz = new Map();
-    Map <String, dynamic > mapz =  {
+    Map<String, dynamic> mapz = {
       'Message': msg.message,
       'NameUser': msg.NameUser,
-      'TimeStamp': msg.TimeStamp,
+      'created_At': msg.TimeStamp,
     };
 
 
-    Firestore.instance.runTransaction((transaction) async{
-      await transaction.update(
-          docref, mapz);
-    }
+//    Firestore.instance
+//        .collection('messg')
+//        .document('Message')
+//        .updateData({'array':FieldValue.arrayUnion([mapz])});
 
-    );
+    docref.updateData( {'array':FieldValue.arrayUnion([mapz])} );
 
+//    Firestore.instance.runTransaction((transaction) async {
+//      await transaction.update(docref, mapz);
+//    });
 
   }
 
+
+
   //final myController = TextEditingController();
 
-  final textController = TextEditingController();
+  final textController = TextEditingController( );
 
   @override
   Widget build(BuildContext context) {
@@ -101,26 +101,29 @@ class _MyHomePageState extends State<MyHomePage> {
             Expanded(
               flex: 10,
               child: StreamBuilder(
-                stream: Firestore.instance.collection('messg').snapshots(),
+                stream: Firestore.instance
+                    .collection('Users')
+                    .snapshots(),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) return Text('Data is coming');
 
                   return ListView.builder(
-                      scrollDirection: Axis.vertical,
-                      shrinkWrap: true,
-                      itemCount: snapshot.data.documents.length,
-                      itemBuilder: (_, int index) {
-                        final DocumentSnapshot docs =
-                        snapshot.data.documents[index];
-                        String tim =  docs['TimeStamp'];
-                        String User = docs['NameUser'];
-                        String anotherOne = User+" Sent: " +tim;
-                        return ListTile(
-                          title: Text(docs['Message']),
+                    scrollDirection: Axis.vertical,
+                    shrinkWrap: true,
+                    itemCount: snapshot.data.documents.length,
+                    itemBuilder: (_, index) {
+                      List<dynamic> document = snapshot.data.documents[index]['array'];
+                      //final dynamic message = document['Message'];
+                      //List<dynamic>  message = document;
+                      print(document.toString());
+                      return ListTile(
 
-                          subtitle: Text(anotherOne),
-                        );
-                      });
+                        // Access the fields as defined in FireStore
+                        title: Text("MESSAGE"),
+                        // subtitle: Text(msg.data['NameUser'].toString()),
+                      );
+                    },
+                  );
                 },
               ),
             ),
@@ -134,7 +137,10 @@ class _MyHomePageState extends State<MyHomePage> {
                       onPressed: () {
                         _onSendMessage(textController.text, "MOSH");
                       },
-                      icon:Icon(Icons.send, color: Colors.blue,),
+                      icon: Icon(
+                        Icons.send,
+                        color: Colors.blue,
+                      ),
 
                       //color: Colors.blue,
                     )),
