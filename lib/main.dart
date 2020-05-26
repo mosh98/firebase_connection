@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 
+//TODO: Be able to send things
+
 void main() {
   runApp(MyApp());
 }
@@ -51,26 +53,24 @@ class _MyHomePageState extends State<MyHomePage> {
         .updateData({'chattingWith': uid});
   }
 
-  void onSendMessage(String content, String uid) {
+  void _onSendMessage(String content, String uid) {
     DateTime now = DateTime.now();
     String formattedDate = DateFormat('kk:mm:ss \n EEE d MMM').format(now);
 
     //payload
     Message msg = new Message(content, formattedDate, uid);
 
-    var docref = Firestore.instance
-        .collection('Users')
-        .document(uid)
-        .collection(uid)
-        .document(DateTime.now().millisecondsSinceEpoch.toString());
+    var docref = Firestore.instance.collection('messg').document('Message');
 
-    //Firestore.instance.collection('Users').document('$uid').collection(uid);
+    //Map<String,dynamic> mapz = new Map();
+    Map<String, dynamic> mapz = {
+      'Message': msg.message,
+      'NameUser': msg.NameUser,
+      'TimeStamp': msg.TimeStamp,
+    };
 
-    databaseReference.runTransaction((transaction) async {
-      await transaction.set(
-        docref,
-        {"Message": msg},
-      );
+    Firestore.instance.runTransaction((transaction) async {
+      await transaction.update(docref, mapz);
     });
   }
 
@@ -81,88 +81,62 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: Text('Chat window'),
       ),
       body: SafeArea(
-          child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: <Widget>[
-          Expanded(
-            flex: 10,
-            child: StreamBuilder(
-              //stream: Firestore.instance.collection('Users').snapshots(),
-              builder: (context, snapshot) {
-                //if (!snapshot.hasData) return Text('Data is coming');
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: <Widget>[
+            Expanded(
+              flex: 10,
+              child: StreamBuilder(
+                stream: Firestore.instance
+                    .collection('messg')
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) return Text('Data is coming');
 
-                return ListView.builder(
+                  return ListView.builder(
                     scrollDirection: Axis.vertical,
                     shrinkWrap: true,
-                    itemCount: 10,
-                    //itemCount: snapshot.data.documents.length,
-                    itemBuilder: (_, int index) {
+                    itemCount: snapshot.data.documents.length,
+                    itemBuilder: (context, index) {
+
+                      DocumentSnapshot msg = snapshot.data.documents[index];
+                      String s = msg.data['array'].toString();
+                     // print(msg.data.toString());
                       return ListTile(
-                        title: Text("This is a message"),
-                        subtitle: Text("Some day some time"),
+                        // Access the fields as defined in FireStore
+                        title: Text(s),
+                       // subtitle: Text(msg.data['NameUser'].toString()),
                       );
-                      /*final DocumentSnapshot docs =
-                        snapshot.data.documents[index];
-                        Message msgz = new Message(
-                            docs['Message'], docs['TimeStamp'],
-                            docs['NameUser']);
-
-                        return ListTile(
-                          title: Text(msgz.toString()),
-                          //subtitle: Text( "\n "+username.toString() +"  "+ timeStamp.toString( ) ),
-                        );*/
-                    });
-              },
-            ),
-          ),
-          Expanded(
-            flex: 2,
-            child: TextField(
-              controller: textController,
-              decoration: InputDecoration(
-                  hintText: "Skicka ett meddelande",
-                  suffixIcon: IconButton(
-                    onPressed: () => textController.clear(),
-                    icon: Icon(
-                      Icons.send,
-                      color: Colors.blue,
-                    ),
-
-                    //color: Colors.blue,
-                  )),
-            ),
-          ),
-        ],
-      )),
-    );
-  }
-
-  ComposerField() {
-    return Container(
-      child: Row(
-        children: <Widget>[
-          IconButton(
-            icon: Icon(Icons.photo),
-          ),
-          Expanded(
-              child: TextField(
-            decoration: InputDecoration(
-                suffixIcon: IconButton(
-              onPressed: () => textController.clear(),
-              icon: Icon(
-                Icons.send,
-                color: Colors.blue,
+                    },
+                  );
+                },
               ),
+            ),
+            Expanded(
+              flex: 2,
+              child: TextField(
+                controller: textController,
+                decoration: InputDecoration(
+                    hintText: "Skicka ett meddelande",
+                    suffixIcon: IconButton(
+                      onPressed: () {
+                        _onSendMessage(textController.text, "MOSH");
+                      },
+                      icon: Icon(
+                        Icons.send,
+                        color: Colors.blue,
+                      ),
 
-              //color: Colors.blue,
-            )),
-          )),
-        ],
+                      //color: Colors.blue,
+                    )),
+              ),
+            )
+          ],
+        ),
       ),
     );
   }
