@@ -37,15 +37,6 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final databaseReference = Firestore.instance;
 
-  List<Widget> makeListWidget(AsyncSnapshot snapshot) {
-    return snapshot.data.documents.map<Widget>((document) {
-      return ListTile(
-        title: Text(document["Message"]),
-        subtitle: Text(document["NameUser"]),
-      );
-    }).toList();
-  }
-
   Future<void> createRecord(String uid) async {
     await databaseReference
         .collection("Users")
@@ -56,45 +47,26 @@ class _MyHomePageState extends State<MyHomePage> {
   void _onSendMessage(String content, String uid) {
     DateTime now = DateTime.now();
     String formattedDate = DateFormat('kk:mm:ss').format(now);
-
-    //payload
-    Message msg = new Message(content, formattedDate, uid);
-
-    var docref = Firestore.instance.collection('Users').document('UserMsg');
-
-    Map<String, dynamic> mapz = {
-      'Message': msg.message,
-      'NameUser': msg.NameUser,
-      'created_At': msg.TimeStamp,
-    };
-
-
-//    Firestore.instance
-//        .collection('messg')
-//        .document('Message')
-//        .updateData({'array':FieldValue.arrayUnion([mapz])});
-
-    docref.updateData( {'array':FieldValue.arrayUnion([mapz])} );
-
-//    Firestore.instance.runTransaction((transaction) async {
-//      await transaction.update(docref, mapz);
-//    });
+    Firestore.instance.collection('messages').document().setData({
+      'from': uid,
+    'text': content,
+    'timestamp': DateTime.now().toIso8601String().toString()});
 
   }
 
 
-
-  //final myController = TextEditingController();
-
-  final textController = TextEditingController( );
+  final textController = TextEditingController();
+  ScrollController scrollController = ScrollController();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: Text('Chat window'),
       ),
       body: SafeArea(
+
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
@@ -102,29 +74,27 @@ class _MyHomePageState extends State<MyHomePage> {
               flex: 10,
               child: StreamBuilder(
                 stream: Firestore.instance
-                    .collection('Users')
+                    .collection('messages').orderBy('timestamp')
                     .snapshots(),
+
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) return Text('Data is coming');
 
-                  return ListView.builder(
-                    scrollDirection: Axis.vertical,
-                    shrinkWrap: true,
-                    itemCount: snapshot.data.documents.length,
-                    itemBuilder: (_, index) {
+                  List<DocumentSnapshot> docs = snapshot.data.documents;
+                  List<Widget> messages = docs.map((doc) =>
+                      Message(
+                        message: doc.data['text'],
+                        timeStamp: doc.data['timestamp'],
+                        nameUser: doc.data['from'],
+                      )).toList();
 
-                      List<dynamic> document = snapshot.data.documents[index]['array'];
-                      print(document.toString());
-
-                      //TODO: The idea is to append the things in things in List<dynamic> document to listTile, otherwise it's good.
-                      return ListTile(
-
-                        // Access the fields as defined in FireStore
-                        title: Text("MESSAGE"),
-                        // subtitle: Text(msg.data['NameUser'].toString()),
-                      );
-                    },
+                  return ListView(
+                    controller: scrollController,
+                    children: <Widget>[
+                      ...messages,
+                    ],
                   );
+
                 },
               ),
             ),
@@ -137,6 +107,8 @@ class _MyHomePageState extends State<MyHomePage> {
                     suffixIcon: IconButton(
                       onPressed: () {
                         _onSendMessage(textController.text, "MOSH");
+                        textController.clear();
+                        scrollController.animateTo(scrollController.position.maxScrollExtent, duration: const Duration(milliseconds: 100), curve: Curves.easeOut);
                       },
                       icon: Icon(
                         Icons.send,
@@ -154,10 +126,38 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
-class Message {
-  String message;
-  String TimeStamp;
-  String NameUser;
+class Message extends StatelessWidget {
+  final String message;
+  final String timeStamp;
+  final String nameUser;
+  final bool self = true;
 
-  Message(this.message, this.TimeStamp, this.NameUser);
+  const Message({Key key, this.message, this.timeStamp, this.nameUser})
+      : super(key: key);
+
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 25.0, vertical: 15.0),
+      child: Column(
+        crossAxisAlignment: self ? CrossAxisAlignment.end : CrossAxisAlignment
+            .start,
+
+
+        children: <Widget>[
+          Text(nameUser),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: <Widget>[
+              Text(timeStamp),
+              SizedBox(height: 8.0,),
+              Text(message)
+            ],
+          )
+        ],
+      ),
+    );
+  }
+
 }
