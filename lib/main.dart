@@ -112,10 +112,11 @@ class _MyHomePageState extends State<MyHomePage> {
                     shrinkWrap: true,
                     itemCount: snapshot.data.documents.length,
                     itemBuilder: (_, index) {
+
                       List<dynamic> document = snapshot.data.documents[index]['array'];
-                      //final dynamic message = document['Message'];
-                      //List<dynamic>  message = document;
                       print(document.toString());
+
+                      //TODO: The idea is to append the things in things in List<dynamic> document to listTile, otherwise it's good.
                       return ListTile(
 
                         // Access the fields as defined in FireStore
