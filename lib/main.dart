@@ -37,6 +37,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final databaseReference = Firestore.instance;
+  final textController = TextEditingController();
 
   List<Widget> makeListWidget(AsyncSnapshot snapshot) {
     return snapshot.data.documents.map<Widget>((document) {
@@ -55,6 +56,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _onSendMessage(String content, String uid) {
+    textController.clear();
     DateTime now = DateTime.now();
     String formattedDate = DateFormat('kk:mm:ss \n EEE d MMM').format(now);
 
@@ -74,19 +76,21 @@ class _MyHomePageState extends State<MyHomePage> {
     };
 
 
-    Firestore.instance.runTransaction((transaction) async{
-      await transaction.update(
-          docref, mapz);
-    }
+    Firestore.instance
+        .collection('messg')
+        .document('Message')
+        .updateData({'array':FieldValue.arrayUnion([mapz])});
 
-    );
+//
+//    Firestore.instance.runTransaction((transaction) async{
+//      await transaction.update(docref, mapz);});
 
 
   }
 
   //final myController = TextEditingController();
 
-  final textController = TextEditingController();
+
 
   @override
   Widget build(BuildContext context) {
@@ -112,9 +116,11 @@ class _MyHomePageState extends State<MyHomePage> {
                       itemBuilder: (_, int index) {
                         final DocumentSnapshot docs =
                         snapshot.data.documents[index];
+
                         String tim =  docs['TimeStamp'];
                         String User = docs['NameUser'];
                         String anotherOne = User+" Sent: " +tim;
+
                         return ListTile(
                           title: Text(docs['Message']),
 
