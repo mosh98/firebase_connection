@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'dart:io' show Platform;
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
@@ -36,22 +37,40 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final databaseReference = Firestore.instance;
+  final String recipient = "norp@florp.com";
+  FirebaseAuth auth = FirebaseAuth.instance;
+  FirebaseUser user;
 
-  Future<void> createRecord(String uid) async {
-    await databaseReference
-        .collection("Users")
-        .document(uid)
-        .updateData({'chattingWith': uid});
+  _MyHomePageState() {
+    signInUser("florp@norp.com", "tester");
+}
+
+
+  Future signInUser(String email, String password) async {
+    try{
+      AuthResult result = await auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      user = result.user;
+    } catch(e){
+      return null;
+    }
+
+
   }
 
-  void _onSendMessage(String content, String uid) {
-    DateTime now = DateTime.now();
-    String formattedDate = DateFormat('kk:mm:ss').format(now);
-    Firestore.instance.collection('messages').document().setData({
-      'from': uid,
+
+
+  void _onSendMessage(String content, String uid, String peerUid) {
+    Firestore.instance.collection('users').document(user.email).collection('chats').document(recipient).collection('messages').document().setData({
+      'from': recipient,
     'text': content,
     'timestamp': DateTime.now().toIso8601String().toString()});
-
+    Firestore.instance.collection('users').document(recipient).collection('chats').document(user.email).collection('messages').document().setData({
+      'from': user.email,
+      'text': content,
+      'timestamp': DateTime.now().toIso8601String().toString()});
   }
 
 
@@ -60,8 +79,10 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      resizeToAvoidBottomInset: true,
+    return SafeArea(
+      bottom: true,
+      child: Scaffold(
+      //resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: Text('Chat window'),
       ),
@@ -74,7 +95,7 @@ class _MyHomePageState extends State<MyHomePage> {
               flex: 10,
               child: StreamBuilder(
                 stream: Firestore.instance
-                    .collection('messages').orderBy('timestamp')
+                    .collection('users').document(user.email).collection('chats').document(recipient).collection('messages').orderBy('timestamp')
                     .snapshots(),
 
                 builder: (context, snapshot) {
@@ -89,6 +110,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       )).toList();
 
                   return ListView(
+
                     controller: scrollController,
                     children: <Widget>[
                       ...messages,
@@ -106,7 +128,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     hintText: "Skicka ett meddelande",
                     suffixIcon: IconButton(
                       onPressed: () {
-                        _onSendMessage(textController.text, "MOSH");
+                        _onSendMessage(textController.text, "b2YxBTdWCTTbxSb6lSvJyskuyN22","ZPdRVUxgUzeMozR6Z6WAhqV13ZZ2");
                         textController.clear();
                         scrollController.animateTo(scrollController.position.maxScrollExtent, duration: const Duration(milliseconds: 100), curve: Curves.easeOut);
                       },
@@ -122,7 +144,7 @@ class _MyHomePageState extends State<MyHomePage> {
           ],
         ),
       ),
-    );
+    ));
   }
 }
 
