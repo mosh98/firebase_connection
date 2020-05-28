@@ -1,10 +1,14 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:http/http.dart' as http;
+import 'package:device_info/device_info.dart';
 
 //TODO: Be able to send things
 void main() {
@@ -37,6 +41,61 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final databaseReference = Firestore.instance;
 
+ // final FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
+
+
+
+
+
+  Future<String> getThisDeviceInfo() async {
+
+    String identifier;
+    final DeviceInfoPlugin deviceInfoPlugin = new DeviceInfoPlugin();
+    try {
+      if (Platform.isAndroid) {
+        var build = await deviceInfoPlugin.androidInfo;
+        identifier = build.id.toString();
+        print(identifier);
+      } else if (Platform.isIOS) {
+        var data = await deviceInfoPlugin.iosInfo;
+        identifier = data.identifierForVendor;//UUID for iOS
+      }
+      return identifier;
+    } catch (e) {
+      print('Failed to get platform version');
+    }
+
+
+  }
+
+
+  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
+
+  void getTokenForThisDevice() async {
+    _firebaseMessaging.getToken().then((value) => print(value));
+  }
+
+//dSlNvWn9-FQ:APA91bHU3vCNpLz6tHMW8GSFJzqGDl_2B2j7uoDYeMSjMg_ac9lmdtDCKIFiElTUZDezNUvBCHm0wOA4nf-23ADkbTUvmJJvN02eRBCMMec9DMqhXH8K9qrJJff609c9Rnu6GNOP3XMe
+  @override
+  Future<void> initState()  {
+
+
+    //_firebaseMessaging.subscribeToTopic(topic);
+
+    _firebaseMessaging.configure(
+      onMessage: (Map<String, dynamic> message) async {
+        print("onMessage: $message");
+      },
+      onLaunch: (Map<String, dynamic> message) async {
+        print("onLaunch: $message");
+      },
+      onResume: (Map<String, dynamic> message) async {
+        print("onResume: $message");
+      },
+    );
+
+  }
+
   Future<void> createRecord(String uid) async {
     await databaseReference
         .collection("Users")
@@ -44,13 +103,70 @@ class _MyHomePageState extends State<MyHomePage> {
         .updateData({'chattingWith': uid});
   }
 
+
+
+
+
+    Future<Map<String, dynamic>> sendAndRetrieveMessage(String body, String title) async {
+      await _firebaseMessaging.requestNotificationPermissions(
+        const IosNotificationSettings(sound: true, badge: true, alert: true, provisional: false),
+      );
+
+      String teken = 'dSlNvWn9-FQ:APA91bHU3vCNpLz6tHMW8GSFJzqGDl_2B2j7uoDYeMSjMg_ac9lmdtDCKIFiElTUZDezNUvBCHm0wOA4nf-23ADkbTUvmJJvN02eRBCMMec9DMqhXH8K9qrJJff609c9Rnu6GNOP3XMe';
+
+      await http.post(
+        'https://fcm.googleapis.com/fcm/send',
+        headers: <String, String>{
+          'Content-Type': 'application/json',
+          'Authorization': 'key=AAAApxhRlHQ:APA91bHl1eBjWN0jTAwguFZKAWPES8DnTa5A7Akw-DSrQiG4mE2lDo-12kzWLke1Kj1rAZ00yguG9FOsLZCODNHLq1-wZOLa_Ny1hKBz-7pRt3mgc8F4FgYk5nykcX7yBstZIQ4-8uuk',
+        },
+
+        body: jsonEncode(
+          <String, dynamic>{
+            'notification': <String, dynamic>{
+              'body': '$body',
+              'title': '$title'
+            },
+            'priority': 'high',
+            'data': <String, dynamic>{
+              'click_action': 'FLUTTER_NOTIFICATION_CLICK',
+              'id': '1',
+              'status': 'done'
+            },
+            'to': teken,
+          },
+        ),
+      );
+
+      final Completer<Map<String, dynamic>> completer =
+      Completer<Map<String, dynamic>>();
+
+      _firebaseMessaging.configure(
+        onMessage: (Map<String, dynamic> message) async {
+          completer.complete(message);
+        },
+      );
+
+      return completer.future;
+    }
+
+
+  String peerUid;
+
   void _onSendMessage(String content, String uid) {
-    DateTime now = DateTime.now();
-    String formattedDate = DateFormat('kk:mm:ss').format(now);
+    //DateTime now = DateTime.now();
+    //String formattedDate = DateFormat('kk:mm:ss').format(now);
     Firestore.instance.collection('messages').document().setData({
       'from': uid,
     'text': content,
     'timestamp': DateTime.now().toIso8601String().toString()});
+
+    //getTokenForThisDevice();
+    _firebaseMessaging.getToken().then((value) => print(value));
+    getThisDeviceInfo();
+//    Future<String> s =  getThisDeviceInfo();
+//    print( s.toString());
+    sendAndRetrieveMessage(content, uid);
 
   }
 
@@ -66,7 +182,6 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text('Chat window'),
       ),
       body: SafeArea(
-
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
@@ -98,6 +213,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 },
               ),
             ),
+
             Expanded(
               flex: 2,
               child: TextField(
@@ -159,5 +275,59 @@ class Message extends StatelessWidget {
       ),
     );
   }
-
 }
+
+//
+//class MessagingWidget extends StatefulWidget{
+//
+//  @override
+//  State<StatefulWidget> createState() {
+//    // TODO: implement createState
+//    throw MessagingWidgetState();
+//  }
+//
+//}
+
+//
+//class MessagingWidgetState extends State<MessagingWidget> {
+//
+//  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
+//
+//
+//
+//
+//  @override
+//  void initState() {
+//
+//    _firebaseMessaging.configure(
+//
+//      onMessage: (Map<String, dynamic> message) async {
+//        print("onMessage: $message");
+//
+//      },
+//
+//      onLaunch: (Map<String, dynamic> message) async {
+//        print("onLaunch: $message");
+//
+//      },
+//      onResume: (Map<String, dynamic> message) async {
+//        print("onResume: $message");
+//
+//      },
+//    );
+//
+//    _firebaseMessaging.requestNotificationPermissions(
+//      const IosNotificationSettings(sound: true, badge:true, alert: true)
+//
+//    );
+//  }
+//
+//  @override
+//  Widget build(BuildContext context) {
+//    return Container(
+//
+//    );
+//  }
+
+
+//}
